@@ -1,0 +1,128 @@
+<apex:page controller="OrderProductClass" lightningstylesheets="true" docType="html-5.0" tabStyle="Serial_Number__c" >
+    <script>
+    function confirmCancel() {
+        var isCancel = confirm("Are you sure you wish to cancel?");
+        if (isCancel) return true;
+        return false;
+    }  
+    </script>
+    <script type="text/javascript">
+    function selectAllCheckboxes(obj,InputID){
+        var inputCheckBox = document.getElementsByTagName("input");    
+        for(var i=0; i<inputCheckBox.length; i++){          
+            if(inputCheckBox[i].id.indexOf(InputID)!=-1){                                     
+                inputCheckBox[i].checked = obj.checked;
+            }
+        }
+    }
+    </script>
+    <apex:sectionHeader title="Add serials" subtitle="Add serials to Order based on Product" />
+    <Apex:form id="theForm">
+        
+        <!--search code-->
+        <apex:inputText value="{!fullname}" html-placeholder="Enter Serial No" />
+        <apex:commandButton value="Search" action="{!Search}"/>
+        <!--search code end-->
+        <!-- For alphabetic search-->
+        <!-- <div align="right">
+<apex:panelGrid >
+<apex:repeat value="{!alphabet}" var="alph">
+<apex:commandLink value="{!alph} | " action="{!getalphaSearch}" reRender="table">
+<apex:param name="a" value="{!alph}" assignTo="{!alphaSearchConct}"/>
+</apex:commandLink>
+</apex:repeat>
+</apex:panelGrid>
+</div>-->
+        <apex:pageBlock title="All Serials" rendered="{!fetchseriallistfororderitem.size!=0}" id="pbId" >
+            <apex:pageMessages ></apex:pageMessages>
+            <apex:pageBlockTable value="{!fetchseriallistfororderitem}" var="u"  style="width:100%">
+                <!--display list and add -->
+                <apex:column headerValue="Select" > 
+                    <Apex:inputcheckbox value="{!u.Selected}"  /> 
+                </apex:column>                           
+       <apex:column >
+         <apex:facet name="header">
+           <apex:commandLink value="Serial Number {!IF(compareField=='Serial_Number__c',IF(sortOrder='asc','▼','▲'),'')}" action="{!sortWrpLst}">  
+             <apex:param name="compareField" value="Serial_Number__c" assignTo="{!compareField}" />  
+             <apex:param name="orderType" value="{!IF(sortOrder='asc', 'desc', 'asc')}" assignTo="{!sortOrder}" />  
+           </apex:commandLink> 
+          </apex:facet>
+            <apex:outputText value="{!u.serialno}"/>
+        </apex:column>
+        <apex:column >
+          <apex:facet name="header">
+            <apex:commandLink value="Product Name {!IF(compareField=='Product_Name__c',IF(sortOrder='asc','▼','▲'),'')}" action="{!sortWrpLst}">  
+              <apex:param name="compareField" value="Product_Name__c" assignTo="{!compareField}" />  
+              <apex:param name="orderType" value="{!IF(sortOrder='asc', 'desc', 'asc')}" assignTo="{!sortOrder}" />  
+            </apex:commandLink> 
+          </apex:facet>
+            <apex:outputText value="{!u.prodname}"/>
+        </apex:column>
+        <apex:column headerValue="Status" > 
+          <apex:outputText value="Unused"   />
+         </apex:column> 
+         <apex:column >
+           <apex:facet name="header">
+             <apex:commandLink value="Bin Number {!IF(compareField=='Bin_Number__c',IF(sortOrder='asc','▼','▲'),'')}" action="{!sortWrpLst}">  
+               <apex:param name="compareField" value="Bin_Number__c" assignTo="{!compareField}" />  
+               <apex:param name="orderType" value="{!IF(sortOrder='asc', 'desc', 'asc')}" assignTo="{!sortOrder}" />  
+             </apex:commandLink> 
+           </apex:facet>
+             <apex:outputText value="{!u.binNo}"/>
+         </apex:column>
+         <apex:column >
+           <apex:facet name="header">
+             <apex:commandLink value="Location {!IF(compareField=='Location__c',IF(sortOrder='asc','▼','▲'),'')}" action="{!sortWrpLst}">  
+               <apex:param name="compareField" value="Location__c" assignTo="{!compareField}" />  
+               <apex:param name="orderType" value="{!IF(sortOrder='asc', 'desc', 'asc')}" assignTo="{!sortOrder}" />  
+              </apex:commandLink> 
+            </apex:facet>
+               <apex:outputText value="{!u.locatn}"/>
+         </apex:column>
+            </apex:pageBlockTable> 
+            
+            <apex:pageBlockButtons location="both">
+                <!-- Action Buttons visible on bottom of page for pagination -->
+                <apex:outputPanel style="text-align:right;" layout="block">
+                    <apex:commandButton value="|< First" reRender="pbId" action="{!first}" disabled="{!NOT(hasPrevious)}" status="paginationStatus"/>
+                    <apex:commandButton value="Previous" rerender="pbId" action="{!previous}" disabled="{!NOT(hasPrevious)}" status="paginationStatus"/>&nbsp;Page {!pageNumber} of {!totalPages}&nbsp; 
+                    <apex:commandButton value="Next" rerender="pbId" action="{!next}" disabled="{!NOT(hasNext)}" status="paginationStatus"/>
+                    <apex:commandButton value="Last >|" rerender="pbId" action="{!last}" disabled="{!NOT(hasNext)}" status="paginationStatus"/>
+                    <apex:actionStatus id="paginationStatus">
+                        <apex:facet name="start">
+                            Please wait...<img src="/img/loading32.gif" style="width: 18px;"/>
+                        </apex:facet>
+                    </apex:actionStatus>
+                    
+                </apex:outputPanel>
+                <apex:outputPanel style="text-align:center;">
+                    <apex:commandButton value="Add to Order" action="{!AddSerialNumbertoOrder}" style="margin-center" rerender="showmsg"/>
+                    <apex:commandButton action="{!cancel}" value="Cancel" onclick="return confirmCancel()" immediate="true" id="cancel" />
+                    <apex:commandButton status="fetchStatus" reRender="pbId" value="Refresh" action="{!refresh}" title="Refresh Page"/>
+                    <apex:actionStatus id="fetchStatus" startText="Fetching..." stopText=""/>
+                </apex:outputPanel>
+            </apex:pageBlockButtons>
+            <!--This code is for Pagination-->
+            <!-- InputText to display current page and to navigate to any page number, At righmost side of page-->
+            <div>
+                <span style="float:right">
+                    <apex:outputLabel value="Page ">
+                    </apex:outputLabel>
+                    <apex:InputText value="{!PageNumber}" maxLength="4" size="1"/>
+                    <!-- To navigate to the page-->           
+                    <apex:outputLabel value=" of {!TotalPages}">
+                    </apex:outputLabel>
+                </span>
+                <!-- To display a list for number of records to be selected per page-->
+                <span style = "float:left">
+                    Display Records per Page:&nbsp;&nbsp; <apex:outputText style="BOld" value="{!RecordsPerPageslist}"></apex:outputText>
+                    <!--   <apex:selectOptions value="{!RecordsPerPageOptionList}"> 
+</apex:selectOptions>
+<apex:actionSupport event="onchange" reRender="{!fetchseriallistfororderitem}"/>
+</apex:SelectList>-->
+                </span>
+            </div>
+            <!--Until Here-->
+        </apex:pageBlock>
+    </Apex:form>
+</apex:page>
